@@ -2,6 +2,9 @@
 {
     public static void Main(string[] args)
     {
-        Console.WriteLine("Day la du an bat dau");
+        int a = 1;
+        int b = 2;
+        int c = a + b;
+        Console.WriteLine(c);
     }
 }
