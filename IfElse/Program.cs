@@ -9,7 +9,7 @@
     }
     public static void Main(string[] args)
     {
-    Season season = Season.Spring;
+    Season season = Season.Summer;
         switch (season)
         {
             case Season.Spring: Console.WriteLine("Mua xuan");
