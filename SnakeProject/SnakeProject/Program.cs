@@ -21,7 +21,21 @@ public class Program
 
     public static void Main(string[] args)
     {
-
+        Console.OutputEncoding = System.Text.Encoding.UTF8;
+        Console.CursorVisible = false; // Ẩn con trỏ
+        LoadHighScore(); // Tải highscore từ file
+        while (currentState != AppState.GameOver)
+        {
+            if (currentState == AppState.MainMenu)
+            {
+                ShowMenu();
+            }
+            else if (currentState == AppState.Playing)
+            {
+                InitializeGame();
+                GameLoop();
+            }
+        }
     }
 
     // Hướng di chuyển
@@ -197,6 +211,27 @@ public class Program
         }
     }
 
+    public static void LoadHighScore()
+    {
+        // Đọc highscore từ file, dùng try-catch để tránh lỗi khi file không tồn tại hoặc có vấn đề
+        try
+        {
+            if (System.IO.File.Exists(highScoreFile)) // Kiểm tra file có tồn tại không
+            {
+                string content = System.IO.File.ReadAllText(highScoreFile); // Đọc nội dung file
+                int hs;
+                if (int.TryParse(content, out hs)) // Chuyển đổi nội dung sang số nguyên
+                {
+                    highscore = hs;
+                }
+            }
+        }
+        catch
+        {
+            // Ignore file read errors
+        }
+    }
+
     // Xử lý nhập từ bàn phím
     public static void HandleInput()
     {
@@ -229,10 +264,11 @@ public class Program
         }
     }
 
+    // Cập nhật trạng thái trò chơi, di chuyển rắn, kiểm tra va chạm, ăn mồi
     public static void Update()
     {
         // Cập nhật vị trí rắn
-        var head = snake.First.Value;
+        var head = snake.First.Value; // Lấy đầu rắn, tạo biến mới để tính toán vị trí mới
         int newX = head.X;
         int newY = head.Y;
 
@@ -268,14 +304,77 @@ public class Program
 
         // Kiểm tra va chạm với thức ăn và chính nó
         bool ateFood = hasFood && newHead.Equals(food);
-        if (!ateFood)
+        if (!ateFood) // Không ăn mồi thì di chuyển bình thường: thêm đầu mới, bỏ đuôi
         {
-
+            snake.AddFirst(newHead);
+            snake.RemoveLast();
+        }
+        else  // Ăn mồi thì chỉ thêm đầu mới, không bỏ đuôi, tăng điểm và tạo mồi mới
+        {
+            {
+                snake.AddFirst(newHead);
+                score++;
+                hasFood = false;
+                SpawnFood();
+                if (speed > 10)
+                    speed -= 5; // Tăng tốc độ khi ăn mồi
+            }
+        }
+        // Kiểm tra va chạm với chính nó 
+        int i = 0;
+        foreach (var segment in snake)
+        {
+            if (i > 0 && segment.Equals(newHead)) // Bỏ qua đầu rắn khi kiểm tra va chạm 
+            {
+                gameOver = true;
+                currentState = AppState.GameOver;
+                break;
+            }
+            i++;
         }
     }
 
+    // Vẽ khung chơi, rắn và thức ăn
     public static void Draw()
     {
-
+        // Vẽ khung chơi 
+        Console.SetCursorPosition(0, 0);
+        for (int y = 0; y < height; y++)
+        {
+            for (int x = 0; x < width; x++)
+            {
+                if (y == 0 || y == height - 1 || x == 0 || x == width - 1)
+                {
+                    Console.Write(wallChar); // Vẽ tường
+                }
+                else if (hasFood && x == food.X && y == food.Y)
+                {
+                    Console.Write(foodChar); // Vẽ thức ăn
+                }
+                else
+                {
+                    bool isSnakePart = false; // Kiểm tra xem có phải phần của rắn không
+                    int i = 0;
+                    foreach (var segment in snake)
+                    {
+                        if (segment.X == x && segment.Y == y)
+                        {
+                            Console.Write(i == 0 ? headChar : bodyChar); // Vẽ rắn
+                            isSnakePart = true;
+                            break;
+                        }
+                        i++;
+                    }
+                    if (!isSnakePart) // Nếu không phải phần của rắn
+                    {
+                        Console.Write(' '); // Vẽ khoảng trống
+                    }
+                }
+            }
+            Console.WriteLine(); // Xuống dòng sau mỗi hàng
+        }
     }
+
+
+
 }
