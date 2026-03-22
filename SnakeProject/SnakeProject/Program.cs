@@ -1,6 +1,4 @@
-﻿
-
-using System;
+﻿using System;
 using System.Diagnostics;
 using System.Drawing;
 
@@ -36,6 +34,8 @@ public class Program
                 GameLoop();
             }
         }
+        Console.CursorVisible = true; // Hiện con trỏ khi thoát
+        SaveHighScore(); // Lưu highscore vào file khi thoát
     }
 
     // Hướng di chuyển
@@ -76,22 +76,21 @@ public class Program
         Console.Clear();
         Console.WriteLine("~~~ RẮN SĂN MỒI ~~~");
         Console.WriteLine();
-        Console.WriteLine();
         Console.WriteLine("1. Bắt đầu");
         Console.WriteLine("2. Hướng dẫn");
         Console.WriteLine("Esc. Thoát");
         Console.WriteLine();
         Console.WriteLine($"Highscore: {highscore}");
-
-        while (true)
+        
+        while (true) 
         {
             var key = Console.ReadKey(true).Key;
-            if (key == ConsoleKey.D1 || key == ConsoleKey.NumPad1)
+            if (key == ConsoleKey.D1)
             {
                 currentState = AppState.Playing;
                 return;
             }
-            else if (key == ConsoleKey.D2 || key == ConsoleKey.NumPad2)
+            else if (key == ConsoleKey.D2)
             {
                 ShowInstructions();
                 Console.WriteLine("Nhấn phím bất kỳ để quay lại menu...");
@@ -127,7 +126,7 @@ public class Program
         paused = false;
         gameOver = false;
         speed = 120;
-
+        // Tạo rắn ở giữa khung chơi
         int sx = width / 2;
         int sy = height / 2;
         snake.AddFirst(new Point(sx, sy));
@@ -185,7 +184,7 @@ public class Program
             System.Threading.Thread.Sleep(delay);
         }
 
-        Console.SetCursorPosition(0, height + 2);
+        Console.SetCursorPosition(0, height + 2); // Đặt con trỏ xuống dưới khung chơi
         Console.WriteLine("=== GAME OVER ===");
         Console.WriteLine();
         Console.WriteLine($"Điểm: {score}   Highscore: {highscore}");
@@ -196,6 +195,26 @@ public class Program
             Console.WriteLine("Chúc mừng! Bạn có highscore mới!");
         }
         Console.WriteLine("Nhấn R để chơi lại, M để về Menu, Esc để thoát...");
+
+        while (true)
+        {
+            var key = Console.ReadKey(true).Key;
+            if (key == ConsoleKey.R)
+            {
+                currentState = AppState.Playing;
+                return;
+            }
+            else if (key == ConsoleKey.M)
+            {
+                currentState = AppState.MainMenu;
+                return;
+            }
+            else if (key == ConsoleKey.Escape)
+            {
+                currentState = AppState.GameOver;
+                return;
+            }
+        }
     }
 
     public static void SaveHighScore()
@@ -235,7 +254,7 @@ public class Program
     // Xử lý nhập từ bàn phím
     public static void HandleInput()
     {
-        while (Console.KeyAvailable)
+        while (Console.KeyAvailable) // Kiểm tra nếu có phím được nhấn
         {
             var key = Console.ReadKey(true).Key;
             switch (key)
@@ -256,6 +275,12 @@ public class Program
                     if (direction != Direction.Left)
                         direction = Direction.Right;
                     break;
+                case ConsoleKey.P:
+                    paused = !paused;
+                    break;
+                case ConsoleKey.R:
+                    InitializeGame();
+                    break;
                 case ConsoleKey.Escape:
                     currentState = AppState.MainMenu;
                     gameOver = true;
@@ -268,7 +293,7 @@ public class Program
     public static void Update()
     {
         // Cập nhật vị trí rắn
-        var head = snake.First.Value; // Lấy đầu rắn, tạo biến mới để tính toán vị trí mới
+        Point head = snake.First.Value; // Lấy đầu rắn, tạo biến mới để tính toán vị trí mới
         int newX = head.X;
         int newY = head.Y;
 
@@ -289,18 +314,17 @@ public class Program
                 break;
         }
 
-        // Tạo điểm mới cho đầu rắn
-        Point newHead = new Point(newX, newY);
-
         // Kiểm tra va chạm với tường
         if (newX == 0)
             newX = width - 2;
         else if (newX == width - 1)
             newX = 1;
-        else if (newY == 0)
+        if (newY == 0)
             newY = height - 2;
         else if (newY == height - 1)
             newY = 1;
+        // Tạo điểm mới cho đầu rắn
+        Point newHead = new Point(newX, newY);
 
         // Kiểm tra va chạm với thức ăn và chính nó
         bool ateFood = hasFood && newHead.Equals(food);
@@ -316,7 +340,7 @@ public class Program
                 score++;
                 hasFood = false;
                 SpawnFood();
-                if (speed > 10)
+                if (score > 10)
                     speed -= 5; // Tăng tốc độ khi ăn mồi
             }
         }
@@ -338,7 +362,7 @@ public class Program
     public static void Draw()
     {
         // Vẽ khung chơi 
-        Console.SetCursorPosition(0, 0);
+        Console.SetCursorPosition(0, 0); // Đặt con trỏ về góc trên bên trái
         for (int y = 0; y < height; y++)
         {
             for (int x = 0; x < width; x++)
